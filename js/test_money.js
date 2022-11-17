@@ -30,6 +30,14 @@ class MoneyTest{
         let expectedValue = new Money(17, "USD"); 1
         assert.deepStrictEqual(portfolio.evaluate("USD"), expectedValue);
     }
+    testAdditionOfDollarsAndWons() {
+        let oneDollar = new Money(1, "USD");
+        let elevenHundredWon = new Money(1100, "KRW");
+        let portfolio = new Portfolio();
+        portfolio.add(oneDollar, elevenHundredWon);
+        let expectedValue = new Money(2200, "KRW"); 1
+        assert.deepStrictEqual(portfolio.evaluate("KRW"), expectedValue);
+    }
     runAllTests() {
         let testMethods = this.getAllTestMethods();
         testMethods.forEach(m => {
