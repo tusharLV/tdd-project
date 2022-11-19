@@ -3,7 +3,7 @@ import {Money} from './money.mjs';
 import {Portfolio} from './portfolio.mjs';
 import {Bank} from './bank.js'
 class MoneyTest{
-    constructor() {
+    setUp() {
         this.bank = new Bank();
         this.bank.addExchangeRate("EUR", "USD", 1.2);
         this.bank.addExchangeRate("USD", "KRW", 1100);
@@ -14,13 +14,6 @@ class MoneyTest{
         let expectedError = new Error("EUR->Kalganid");
         assert.throws(function () { bank.convert(tenEuros, "Kalganid") },
             expectedError);
-    }
-    testConversion() {
-        let bank = new Bank();
-        bank.addExchangeRate("EUR", "USD", 1.2);
-        let tenEuros = new Money(10, "EUR");
-        assert.deepStrictEqual(
-            bank.convert(tenEuros, "USD"), new Money(12, "USD"));
     }
     testMultiplication(){
         let tenEuros = new Money(10, "EUR");
@@ -66,12 +59,21 @@ class MoneyTest{
         let expectedError = new Error("Missing exchange rate(s):[USD->Kalganid,EUR->Kalganid,KRW->Kalganid]");
         assert.throws(() => portfolio.evaluate(this.bank, "Kalganid"), expectedError);
     }
+    testConversionWithDifferentRatesBetweenTwoCurrencies() {
+        let tenEuros = new Money(10, "EUR");
+        assert.deepStrictEqual(
+            this.bank.convert(tenEuros, "USD"), new Money(12, "USD"));
+        this.bank.addExchangeRate("EUR", "USD", 1.3); 2
+        assert.deepStrictEqual(this.bank.convert(tenEuros, "USD"),
+            new Money(13, "USD"))
+    }
     runAllTests() {
-        let testMethods = this.getAllTestMethods();
+        let testMethods = this.randomizeTestOrder(this.getAllTestMethods());
         testMethods.forEach(m => {
             console.log("Running: %s()", m);
             let method = Reflect.get(this, m);
             try {
+                this.setUp();
                 Reflect.apply(method, this, []);
             } catch (e) {
                 if (e instanceof assert.AssertionError) {
@@ -88,6 +90,13 @@ class MoneyTest{
         let testMethods = allProps.filter(p => {
             return typeof moneyPrototype[p] === 'function' && p.startsWith("test");
         });
+        return testMethods;
+    }
+    randomizeTestOrder(testMethods) {
+        for (let i = testMethods.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [testMethods[i], testMethods[j]] = [testMethods[j], testMethods[i]];
+        }
         return testMethods;
     }
 }
