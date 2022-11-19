@@ -1,8 +1,27 @@
 import * as assert from 'assert';
 import {Money} from './money.mjs';
 import {Portfolio} from './portfolio.mjs';
-
+import {Bank} from './bank.js'
 class MoneyTest{
+    constructor() {
+        this.bank = new Bank();
+        this.bank.addExchangeRate("EUR", "USD", 1.2);
+        this.bank.addExchangeRate("USD", "KRW", 1100);
+    }
+    testConversionWithMissingExchangeRate() {
+        let bank = new Bank();
+        let tenEuros = new Money(10, "EUR");
+        let expectedError = new Error("EUR->Kalganid");
+        assert.throws(function () { bank.convert(tenEuros, "Kalganid") },
+            expectedError);
+    }
+    testConversion() {
+        let bank = new Bank();
+        bank.addExchangeRate("EUR", "USD", 1.2);
+        let tenEuros = new Money(10, "EUR");
+        assert.deepStrictEqual(
+            bank.convert(tenEuros, "USD"), new Money(12, "USD"));
+    }
     testMultiplication(){
         let tenEuros = new Money(10, "EUR");
         let twentyEuros = new Money(20,"EUR");
@@ -20,7 +39,7 @@ class MoneyTest{
         let fifteenDollars = new Money(15,"USD")
         let portfolio = new Portfolio();
         portfolio.add(fiveDollars,tenDollars)
-        assert.deepStrictEqual(portfolio.evaluate("USD"),fifteenDollars)
+        assert.deepStrictEqual(portfolio.evaluate(this.bank,"USD"),fifteenDollars)
     }
     testAdditionOfDollarsAndEuros() {
         let fiveDollars = new Money(5, "USD");
@@ -28,7 +47,7 @@ class MoneyTest{
         let portfolio = new Portfolio();
         portfolio.add(fiveDollars, tenEuros);
         let expectedValue = new Money(17, "USD"); 1
-        assert.deepStrictEqual(portfolio.evaluate("USD"), expectedValue);
+        assert.deepStrictEqual(portfolio.evaluate(this.bank,"USD"), expectedValue);
     }
     testAdditionOfDollarsAndWons() {
         let oneDollar = new Money(1, "USD");
@@ -36,7 +55,7 @@ class MoneyTest{
         let portfolio = new Portfolio();
         portfolio.add(oneDollar, elevenHundredWon);
         let expectedValue = new Money(2200, "KRW");
-        assert.deepStrictEqual(portfolio.evaluate("KRW"), expectedValue);
+        assert.deepStrictEqual(portfolio.evaluate(this.bank,"KRW"), expectedValue);
     }
     testAdditionWithMultipleMissingExchangeRates() {
         let oneDollar = new Money(1, "USD");
@@ -45,7 +64,7 @@ class MoneyTest{
         let portfolio = new Portfolio();
         portfolio.add(oneDollar, oneEuro, oneWon);
         let expectedError = new Error("Missing exchange rate(s):[USD->Kalganid,EUR->Kalganid,KRW->Kalganid]");
-        assert.throws(function() {portfolio.evaluate("Kalganid")}, expectedError);
+        assert.throws(() => portfolio.evaluate(this.bank, "Kalganid"), expectedError);
     }
     runAllTests() {
         let testMethods = this.getAllTestMethods();
